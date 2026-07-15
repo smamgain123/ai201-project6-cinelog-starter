@@ -1,8 +1,10 @@
 import pytest
 from app import create_app, db
-from models import User, Film
+from models import User, Film, WatchlistEntry
 from services.watchlist_service import (
     add_to_watchlist,
+    remove_from_watchlist,
+    NotInWatchlistError,
 )
 from services.collection_service import FilmNotFoundError
 
@@ -28,7 +30,6 @@ def sample_user(app):
         db.session.commit()
         return user.id
 
-
 def test_add_to_watchlist_nonexistent_film_raises(app, sample_user):
     """
     Adding a film_id that doesn't exist should raise FilmNotFoundError.
@@ -40,4 +41,56 @@ def test_add_to_watchlist_nonexistent_film_raises(app, sample_user):
             add_to_watchlist(
                 user_id=sample_user,
                 film_id=fake_film_id,
+            )
+
+@pytest.fixture
+def sample_film(app):
+    with app.app_context():
+        film = Film(title="Paddington 2", year=2017, genre="Comedy")
+        db.session.add(film)
+        db.session.commit()
+        return film.id
+    
+def test_remove_from_watchlist_removes_entry(
+    app,
+    sample_user,
+    sample_film,
+):
+    """
+    Removing a film already on the watchlist should delete its entry.
+    """
+    with app.app_context():
+        add_to_watchlist(
+            user_id=sample_user,
+            film_id=sample_film,
+        )
+
+        result = remove_from_watchlist(
+            user_id=sample_user,
+            film_id=sample_film,
+        )
+
+        assert result is True
+
+        entry = WatchlistEntry.query.filter_by(
+            user_id=sample_user,
+            film_id=sample_film,
+        ).first()
+
+        assert entry is None
+
+def test_remove_from_watchlist_missing_entry_raises(
+    app,
+    sample_user,
+    sample_film,
+):
+    """
+    Removing a film that is not on the watchlist should raise
+    NotInWatchlistError.
+    """
+    with app.app_context():
+        with pytest.raises(NotInWatchlistError):
+            remove_from_watchlist(
+                user_id=sample_user,
+                film_id=sample_film,
             )
