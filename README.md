@@ -1,92 +1,35 @@
-# CineLog
-
-A community film tracking app. Users log films they've watched, rate them, and build collections.
-
-This repository is the starting point for **Project 6: Simulated Code Review**.
-
 ---
 
-## Setup
+# PR Description
+
+## Overview
+
+This PR completes the watchlist feature by allowing users to add films to their watchlist, preventing duplicate entries, supporting removal from the watchlist, and allowing callers to explicitly control watchlist visibility. The implementation follows the existing service and testing patterns already used in the CineLog codebase.
+
+## Design Decisions
+
+### Default Visibility
+
+Watchlist entries are private by default because adding a film is primarily a personal planning action rather than an intentional public recommendation. Users can explicitly choose to make an entry public by passing the `public` parameter.
+
+### Sort Order
+
+The watchlist is intended to display the most recently added films first. Since users generally revisit recently discovered films, this ordering better matches common watchlist behavior than alphabetical ordering.
+
+## Manual Testing
+
+1. Start the application.
+2. Add a valid film to the watchlist.
+3. Verify the watchlist entry is created.
+4. Attempt to add the same film twice and verify an error is raised.
+5. Attempt to add a nonexistent film ID and verify `FilmNotFoundError` is raised.
+6. Remove an existing watchlist entry and verify it is deleted.
+7. Attempt to remove a film that is not on the watchlist and verify `NotInWatchlistError` is raised.
+8. Add watchlist entries using both `"public": true` and `"public": false` and verify visibility is stored correctly.
+9. Run:
 
 ```bash
-pip install -r requirements.txt
-python app.py
+.venv/bin/python -m pytest tests/ -v
 ```
 
-The app starts on `http://localhost:5000` and uses a local SQLite database (`cinelog.db`).
-
----
-
-## Project Structure
-
-```
-ai201-project6-cinelog-starter/
-├── app.py                     # Flask app factory
-├── models.py                  # SQLAlchemy models
-├── services/
-│   └── collection_service.py  # Business logic for collections
-├── routes/
-│   ├── films.py               # Film browsing endpoints
-│   └── collection.py          # Collection endpoints
-├── tests/
-│   └── test_collection.py     # Tests for collection service
-├── CONTRIBUTING.md            # Commit conventions and PR guidelines
-└── requirements.txt
-```
-
----
-
-## API Overview
-
-### Films
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/films/` | List all films (supports `?genre=` and `?year=` filters) |
-| GET | `/films/<film_id>` | Get a single film by UUID |
-
-### Collection
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/collection/<user_id>` | Get a user's collection (newest first) |
-| POST | `/collection/<user_id>/add` | Add a film to the collection |
-| DELETE | `/collection/<user_id>/remove` | Remove a film from the collection |
-
----
-
-## Data Models
-
-**Film** — A film in the catalog. IDs are UUIDs.
-
-**User** — A registered user. IDs are UUIDs.
-
-**CollectionEntry** — Links a user to a film they've watched. Stores rating and date added. A user can only have one entry per film.
-
----
-
-## Naming Conventions
-
-Service functions follow a `verb_to_noun` pattern. See `CONTRIBUTING.md` for full details.
-
----
-
-## Running Tests
-
-```bash
-pytest tests/
-```
-
----
-
-## Your Task
-
-You're working on the `feature/watchlist` branch, which adds a watchlist feature to CineLog. A maintainer (`@dev-lead`) has reviewed your PR and left six comments. Your job is to address all six.
-
-Read `CONTRIBUTING.md` before touching any code. Then check out the `feature/watchlist` branch:
-
-```bash
-git checkout feature/watchlist
-```
-
-The open PR and the maintainer's review comments are filed on GitHub. Work through each comment and document your responses in your **PR Response Doc**.
+Verify all tests pass successfully.
