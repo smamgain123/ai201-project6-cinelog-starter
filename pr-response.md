@@ -21,11 +21,11 @@ I performed a project-wide search to ensure there were no remaining source code 
 
 **What I did:**
 
-I added a duplicate check to `add_to_watchlist()` before creating a new `WatchlistEntry`. The service now queries for an existing entry with the same `user_id` and `film_id`. If one already exists, it raises `AlreadyInWatchlistError` instead of creating a duplicate record.
+I added a duplicate check to `add_to_watchlist()` before creating a new `WatchlistEntry`. The service queries for an existing entry with the same `user_id` and `film_id`. If one already exists, it raises `AlreadyInWatchlistError` instead of creating a second watchlist entry.
 
 **How I verified:**
 
-I followed the existing implementation in `add_to_collection()` so the watchlist behavior is consistent with the rest of the codebase. After making the change, I ran the test suite to confirm existing functionality was not affected.
+I followed the existing implementation in `add_to_collection()` so the watchlist behavior is consistent with the rest of the codebase. I also verified the behavior using a duplicate-entry test to confirm only one watchlist entry is stored for a given user and film.
 ---
 
 ## Comment 3 — Missing Test
@@ -127,10 +127,40 @@ I added one test confirming an existing watchlist entry is removed and another c
 
 ## Commit History Screenshot
 
-_Add before submission._
+![alt text](image.png)
 
 ---
 
-## PR Description
+# PR Description
 
-_To be completed._
+## Overview
+
+This PR completes the watchlist feature by allowing users to add films to a watchlist, preventing duplicate entries, supporting removal from the watchlist, and allowing callers to explicitly control watchlist visibility. The implementation follows the existing service and testing patterns already used throughout CineLog.
+
+## Design Decisions
+
+### Default Visibility
+
+Watchlist entries are private by default because adding a film is primarily a personal planning action rather than an intentional public recommendation. Users can explicitly choose to make an entry public through the `public` parameter.
+
+### Sort Order
+
+The watchlist displays the most recently added films first because users are most likely to revisit recently discovered movies rather than browse alphabetically.
+
+## Manual Testing
+
+1. Start the application.
+2. Add a valid film to the watchlist.
+3. Verify the watchlist entry is created.
+4. Attempt to add the same film twice and verify duplicates are prevented.
+5. Attempt to add a nonexistent film ID and verify `FilmNotFoundError` is raised.
+6. Remove an existing watchlist entry.
+7. Attempt to remove a missing watchlist entry and verify `NotInWatchlistError` is raised.
+8. Add watchlist entries using both `"public": true` and `"public": false` to verify visibility behavior.
+9. Run:
+
+```bash
+.venv/bin/python -m pytest tests/ -v
+```
+
+Verify all tests pass.
